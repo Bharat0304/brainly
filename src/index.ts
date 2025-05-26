@@ -2,7 +2,9 @@ import express from 'express';
 import mongoose from 'mongoose';
 import z from "zod";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import { UserSchema } from './db';
+import { JWT_SECRET } from './config';
 const app=express();
 app.use(express.json());
  async function abc(){
@@ -55,7 +57,14 @@ app.post("/api/v1/signin", async (req,res)=>{
             msg:"Invalid credintials "
         })
     }
-    const correcthash= await bcrypt.compare(password,password)
+    const correcthash= await bcrypt.compare(password,password);
+    if(correcthash){
+        const token=jwt.sign({
+            id: user._id.toString()
+        },JWT_SECRET
+
+        )
+    }
 
     
 
