@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import z from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { UserSchema } from './db';
+import { UserModel } from './db';
 import { JWT_SECRET } from './config';
 const app=express();
 app.use(express.json());
@@ -16,20 +16,21 @@ abc()
 app.post("/api/v1/signup", async(req,res)=>{
     const requirebody=z.object({
         email:z.string().email().min(5).max(100),
-        password:z.string().email().max(50).min(4)
+        password:z.string().email().max(50).min(4),
+        username:z.string().max(25)
     })
     const parsedatasuccess=requirebody.safeParse(req.body)
     if(!parsedatasuccess){
         res.status(411).json({
             msg:"Incorrect format "
-        })
+        })  
     }
     
     const username=req.body.username
     const password=req.body.password
     const hashedpassword=await bcrypt.hash(password,5)
 try{
-    await UserSchema.create({
+    await UserModel.create({
         username:username,
         password:hashedpassword
 
@@ -39,43 +40,37 @@ catch(e){
         msg:"User already exist "
     })
 }
-
+console.log(req.body)
    res.json({
     msg:"YOU are signed up "
+
    }) }
+   
+   
 
 )
-app.post("/api/v1/signin", async (req,res)=>{
-    const username=req.body.username;
-    const password=req.body.password;
-     const user=await UserSchema.findOne({
-        username:username
-        
-     })
-    if(!user){
-         res.status(411).json({
-            msg:"Invalid credintials "
-        })
-    }
-    const correcthash= await bcrypt.compare(password,password);
-    if(correcthash){
+app.post("/api/v1/signin",async(req,res)=>{
+    const username=req.body.username
+    const password=req.body.password
+    const existinguser=await UserModel.findOne({
+        username
+    })
+    if(existinguser){
         const token=jwt.sign({
-            id: user._id.toString()
-        },JWT_SECRET
-
-        )
+            id:existinguser._id
+        },JWT_SECRET)
     }
 
-    
+})
+  
+
+app.post("/api/v1/content" , (req,res)=>{
 
 })
-app.post("api/v1/content" , (req,res)=>{
+app.get("/api/v1/content", (req,res)=>{
 
 })
-app.get("api/v1/content", (req,res)=>{
-
-})
-app.delete("api/v1/content", (req,res)=>{
+app.delete("/api/v1/content", (req,res)=>{
      
 })
 app.listen(3000);
