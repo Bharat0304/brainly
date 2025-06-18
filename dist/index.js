@@ -31,7 +31,7 @@ console.log("Mongodb is connected ");
 app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const requirebody = zod_1.default.object({
         email: zod_1.default.string().email().min(5).max(100),
-        password: zod_1.default.string().email().max(50).min(4),
+        password: zod_1.default.string().max(50).min(4),
         username: zod_1.default.string().max(25)
     });
     const parsedatasuccess = requirebody.safeParse(req.body);
@@ -42,7 +42,8 @@ app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
     const username = req.body.username;
     const password = req.body.password;
-    const hashedpassword = yield bcrypt_1.default.hash(password, 5);
+    const salt = yield bcrypt_1.default.genSalt(10);
+    const hashedpassword = yield bcrypt_1.default.hash(password, salt);
     try {
         yield db_1.UserModel.create({
             username: username,
@@ -60,15 +61,37 @@ app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, funct
     });
 }));
 app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const username = req.body.username;
-    const password = req.body.password;
-    const existinguser = yield db_1.UserModel.findOne({
-        username
-    });
-    if (existinguser) {
+    const { username, password } = req.body;
+    try {
+        if (!username || !password) {
+            res.status(400).json("Username and password are required");
+            return;
+        }
+        const existinguser = yield db_1.UserModel.findOne({ username });
+        if (!existinguser) {
+            res.status(403).json({
+                msg: "User not found"
+            });
+            return;
+        }
+        const ispasswordcorrect = yield bcrypt_1.default.compare(password, existinguser.password || '');
+        if (!ispasswordcorrect) {
+            res.status(400).json({
+                msg: "Incorrect password"
+            });
+            return;
+        }
         const token = jsonwebtoken_1.default.sign({
             id: existinguser._id
         }, config_1.JWT_SECRET);
+        res.json({
+            token
+        });
+    }
+    catch (e) {
+        res.status(500).json({
+            msg: "Error sigining in "
+        });
     }
 }));
 app.post("/api/v1/content", (req, res) => {
@@ -76,5 +99,8 @@ app.post("/api/v1/content", (req, res) => {
 app.get("/api/v1/content", (req, res) => {
 });
 app.delete("/api/v1/content", (req, res) => {
+});
+app.get("/", (req, res) => {
+    res.send("Server running ✅");
 });
 app.listen(3000);

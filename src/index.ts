@@ -3,8 +3,9 @@ import mongoose from 'mongoose';
 import z from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { UserModel } from './db';
+import { ContentModel, UserModel } from './db';
 import { JWT_SECRET } from './config';
+import { Usermiddleware } from './middleware';
 const app=express();
 app.use(express.json());
  async function abc(){
@@ -88,7 +89,36 @@ app.post("/api/v1/signin",async (req,res)=>{
   }
 })
   
-app.post("/api/v1/content" , (req,res)=>{
+app.post("/api/v1/content" ,Usermiddleware, async (req,res)=>{
+  const title=req.body.title;
+  const content=req.body.content
+  const link=req.body.link  
+  const tag=req.body.tag
+  const Userid=req.body.Userid
+  const type=req.body.type
+  if(!title || !content){
+    res.status(400).json({
+      msg:"Content and title is necessary"
+    })
+  }
+ try{
+  const Content=await ContentModel.create({
+    title:title,
+    content:content,
+    link:link,
+    type:type,
+    Userid:Userid
+})
+res.status(200).json({
+  msg:"Content was added"
+})
+ }
+ catch(e){
+  res.status(400).json({
+    msg:"There was a error adding a content "
+  })
+
+ }
 
 })
 app.get("/api/v1/content", (req,res)=>{
@@ -97,7 +127,7 @@ app.get("/api/v1/content", (req,res)=>{
 app.delete("/api/v1/content", (req,res)=>{
      
 })
-app.get("/", (req, res) => {
+app.get("/",Usermiddleware, (req, res) => {
     res.send("Server running ✅");
   });
   
