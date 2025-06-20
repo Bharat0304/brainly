@@ -5,12 +5,12 @@ import z from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { ContentModel, UserModel } from './db';
-import { JWT_SECRET } from './config';
+import { JWT_SECRET,mongodburl } from './config';
 import { Usermiddleware } from './middleware';
 const app=express();
 app.use(express.json());
 async function abc() {
-  await mongoose.connect("mongodb+srv://kbharat84265:SjgpL1UbSskmfFBO@cluster0.tfyruuc.mongodb.net/brainlydb");
+  await mongoose.connect(mongodburl);
 }
 
 abc()
@@ -130,11 +130,23 @@ return ;
 
 
 })
-app.get("/api/v1/content", (req,res)=>{
+app.get("/api/v1/content",Usermiddleware, async (req,res)=>{
+  const data=await ContentModel.findOne({
+    Userid:req.Userid
+  }).populate("Userid","username")
+  res.status(200).json({
+    data
+  })
   console.log("HI there");
 
+
 })
-app.delete("/api/v1/content", (req,res)=>{
+app.delete("/api/v1/content",Usermiddleware, async(req,res)=>{
+  const Contentid=req.body.Contentid;
+ await ContentModel.deleteMany({
+  Contentid,
+  Userid:req.Userid
+  })
      
 })
 app.post("/api/v1/check", (req, res) => {

@@ -124,9 +124,15 @@ app.post("/api/v1/content", middleware_1.Usermiddleware, (req, res) => __awaiter
         return;
     }
 }));
-app.get("/api/v1/content", (req, res) => {
+app.get("/api/v1/content", middleware_1.Usermiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = yield db_1.ContentModel.findOne({
+        Userid: req.Userid
+    }).populate("Userid", "username");
+    res.status(200).json({
+        data
+    });
     console.log("HI there");
-});
+}));
 app.delete("/api/v1/content", (req, res) => {
 });
 app.post("/api/v1/check", (req, res) => {
