@@ -9,6 +9,7 @@ if(!token){
     })
     return;
 }
+const tokens =token.split(' ')[1]
 try{
 const decoded =jwt.verify(token ,JWT_SECRET) as {id:string};
 if(decoded){
@@ -21,6 +22,7 @@ catch(e){
     res.status(400).json({
         msg:"Invalid token "
     })
+    return;
 }
 
 }

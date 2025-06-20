@@ -19,6 +19,7 @@ const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const db_1 = require("./db");
 const config_1 = require("./config");
+const middleware_1 = require("./middleware");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 function abc() {
@@ -26,8 +27,13 @@ function abc() {
         yield mongoose_1.default.connect("mongodb+srv://kbharat84265:SjgpL1UbSskmfFBO@cluster0.tfyruuc.mongodb.net/brainlydb");
     });
 }
-abc();
-console.log("Mongodb is connected ");
+abc()
+    .then(() => {
+    console.log("MongoDB connected");
+})
+    .catch(err => {
+    console.error("MongoDB connection failed", err);
+});
 app.post("/api/v1/signup", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const requirebody = zod_1.default.object({
         email: zod_1.default.string().email().min(5).max(100),
@@ -87,20 +93,49 @@ app.post("/api/v1/signin", (req, res) => __awaiter(void 0, void 0, void 0, funct
         res.json({
             token
         });
+        return;
     }
     catch (e) {
         res.status(500).json({
             msg: "Error sigining in "
         });
+        return;
     }
 }));
-app.post("/api/v1/content", (req, res) => {
-});
+app.post("/api/v1/content", middleware_1.Usermiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { title, content, link, type } = req.body;
+    try {
+        const Content = yield db_1.ContentModel.create({
+            title: title,
+            content: content,
+            link: link,
+            type: type,
+            Userid: req.Userid
+        });
+        res.status(200).json({
+            msg: "Content was added"
+        });
+        return;
+    }
+    catch (e) {
+        res.status(400).json({
+            msg: "There was a error adding a content "
+        });
+        return;
+    }
+}));
 app.get("/api/v1/content", (req, res) => {
+    console.log("HI there");
 });
 app.delete("/api/v1/content", (req, res) => {
 });
-app.get("/", (req, res) => {
-    res.send("Server running ✅");
+app.post("/api/v1/check", (req, res) => {
+    console.log("POST /check hit", req.body);
+    res.status(200).json({ msg: "hello there" });
+    return;
+});
+app.get("/api/v1/test", (req, res) => {
+    console.log("Test endpoint hit");
+    res.json({ msg: "Server is working" });
 });
 app.listen(3000);

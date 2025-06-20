@@ -1,4 +1,5 @@
 import express from 'express';
+
 import mongoose from 'mongoose';
 import z from "zod";
 import bcrypt from "bcrypt";
@@ -8,11 +9,19 @@ import { JWT_SECRET } from './config';
 import { Usermiddleware } from './middleware';
 const app=express();
 app.use(express.json());
- async function abc(){
- await mongoose.connect("mongodb+srv://kbharat84265:SjgpL1UbSskmfFBO@cluster0.tfyruuc.mongodb.net/brainlydb")
+async function abc() {
+  await mongoose.connect("mongodb+srv://kbharat84265:SjgpL1UbSskmfFBO@cluster0.tfyruuc.mongodb.net/brainlydb");
 }
+
 abc()
-    console.log("Mongodb is connected ")
+  .then(() => {
+    console.log("MongoDB connected");
+  
+  })
+  .catch(err => {
+    console.error("MongoDB connection failed", err);
+  });
+
 
 app.post("/api/v1/signup", async(req,res)=>{
     const requirebody=z.object({
@@ -79,56 +88,64 @@ app.post("/api/v1/signin",async (req,res)=>{
       res.json({
         token
       })
-    
+    return;
   }
   catch(e){
     res.status(500).json({
       msg:"Error sigining in "
     })
+    return ;
 
   }
 })
   
-app.post("/api/v1/content" ,Usermiddleware, async (req,res)=>{
-  const title=req.body.title;
-  const content=req.body.content
-  const link=req.body.link  
-  const tag=req.body.tag
-  const Userid=req.body.Userid
-  const type=req.body.type
-  if(!title || !content){
-    res.status(400).json({
-      msg:"Content and title is necessary"
-    })
-  }
+app.post("/api/v1/content" , Usermiddleware,async (req,res)=>{
+  
+
+  const {title,content,link,type}=req.body
+  
+
  try{
   const Content=await ContentModel.create({
     title:title,
     content:content,
     link:link,
     type:type,
-    Userid:Userid
+    Userid:req.Userid
+    
 })
 res.status(200).json({
   msg:"Content was added"
+
 })
+return ;
  }
  catch(e){
   res.status(400).json({
     msg:"There was a error adding a content "
   })
+  return;
 
  }
 
+
 })
 app.get("/api/v1/content", (req,res)=>{
+  console.log("HI there");
 
 })
 app.delete("/api/v1/content", (req,res)=>{
      
 })
-app.get("/",Usermiddleware, (req, res) => {
-    res.send("Server running ✅");
-  });
-  
-app.listen(3000);
+app.post("/api/v1/check", (req, res) => {
+  console.log("POST /check hit", req.body);
+  res.status(200).json({ msg: "hello there" });
+  return;
+})
+
+app.get("/api/v1/test", (req, res) => {
+  console.log("Test endpoint hit");
+  res.json({msg: "Server is working"});
+});
+
+app.listen(3000 ) ;
