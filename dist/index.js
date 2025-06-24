@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const utils_1 = require("./utils");
 const mongoose_1 = __importDefault(require("mongoose"));
 const zod_1 = __importDefault(require("zod"));
 const bcrypt_1 = __importDefault(require("bcrypt"));
@@ -24,7 +25,7 @@ const app = (0, express_1.default)();
 app.use(express_1.default.json());
 function abc() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield mongoose_1.default.connect("mongodb+srv://kbharat84265:SjgpL1UbSskmfFBO@cluster0.tfyruuc.mongodb.net/brainlydb");
+        yield mongoose_1.default.connect(config_1.mongodburl);
     });
 }
 abc()
@@ -133,15 +134,73 @@ app.get("/api/v1/content", middleware_1.Usermiddleware, (req, res) => __awaiter(
     });
     console.log("HI there");
 }));
-app.delete("/api/v1/content", (req, res) => {
-});
-app.post("/api/v1/check", (req, res) => {
-    console.log("POST /check hit", req.body);
-    res.status(200).json({ msg: "hello there" });
-    return;
-});
-app.get("/api/v1/test", (req, res) => {
-    console.log("Test endpoint hit");
-    res.json({ msg: "Server is working" });
-});
+app.delete("/api/v1/content", middleware_1.Usermiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const Contentid = req.body.Contentid;
+    yield db_1.ContentModel.deleteMany({
+        Contentid,
+        Userid: req.Userid
+    });
+}));
+app.post("/api/v1/brain/share", middleware_1.Usermiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const share = req.body.share;
+    try {
+        if (share) {
+            const existing = yield db_1.LinkModel.findOne({
+                Userid: req.Userid
+            });
+            if (existing) {
+                res.json({
+                    hash: existing.hash
+                });
+            }
+            const correcthash = (0, utils_1.randomhash)(10);
+            const existingLink = yield db_1.LinkModel.create({
+                Userid: req.Userid,
+                hash: correcthash
+            });
+            console.log(existingLink);
+            res.json({
+                correcthash
+            });
+            return;
+        }
+        const existinglink = yield db_1.LinkModel.deleteOne({
+            Userid: req.Userid
+        });
+        res.json({
+            msg: 'link delted succesfully '
+        });
+        return;
+    }
+    catch (eror) {
+        res.json({
+            msg: "link already exist"
+        });
+    }
+}));
+app.get("/api/v1/brain/:sharelink", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const hash = req.params.sharelink;
+    const link = yield db_1.LinkModel.findOne({
+        hash: hash
+    });
+    if (!link) {
+        res.json({
+            msg: "Link does not exist "
+        });
+        return;
+    }
+    const User = yield db_1.UserModel.findOne({
+        _id: link.Userid
+    });
+    const content = yield db_1.ContentModel.findOne({
+        Userid: link.Userid
+    });
+    res.json({
+        content,
+        User: {
+            username: User === null || User === void 0 ? void 0 : User.username,
+            id: User === null || User === void 0 ? void 0 : User._id
+        }
+    });
+}));
 app.listen(3000);

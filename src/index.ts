@@ -1,10 +1,11 @@
 import express from 'express';
-
+import{randomhash} from './utils'
 import mongoose from 'mongoose';
-import z from "zod";
-import bcrypt from "bcrypt";
+import z, { boolean, literal } from "zod";
+import bcrypt, { hash } from "bcrypt";
+import { Request,Response } from 'express';
 import jwt from "jsonwebtoken";
-import { ContentModel, UserModel } from './db';
+import { ContentModel, LinkModel, UserModel } from './db';
 import { JWT_SECRET,mongodburl } from './config';
 import { Usermiddleware } from './middleware';
 const app=express();
@@ -149,15 +150,78 @@ app.delete("/api/v1/content",Usermiddleware, async(req,res)=>{
   })
      
 })
-app.post("/api/v1/check", (req, res) => {
-  console.log("POST /check hit", req.body);
-  res.status(200).json({ msg: "hello there" });
-  return;
+app.post("/api/v1/brain/share", Usermiddleware,async(req,res)=>{
+  const share=req.body.share;
+
+ 
+  try {if(share){
+    const existing=await LinkModel.findOne({
+     Userid:req.Userid
+    
+    })
+    if(existing){
+      res.json({
+        hash:existing.hash
+      })
+    }
+    const correcthash=randomhash(10);
+
+    const existingLink= await LinkModel.create({
+      Userid:req.Userid,
+      hash:correcthash
+
+    })
+    console.log(existingLink)
+    res.json({
+      correcthash 
+    })
+    return;
+  }
+  
+
+  const existinglink=await LinkModel.deleteOne({
+    
+    Userid:req.Userid
+
+  })
+  res.json({
+    msg:'link delted succesfully '
+  })
+  return
+ }
+ catch(eror){
+  res.json({
+    msg:"link already exist"
+  })
+}
+})
+app.get("/api/v1/brain/:sharelink",async(req,res)=>{
+  const hash=req.params.sharelink;
+  const link=await LinkModel.findOne({
+    hash:hash
+  })
+  if(!link){
+     res.json({
+      msg:"Link does not exist "
+    })
+    return ;
+  
+  }
+const User=await UserModel.findOne({
+  _id:link.Userid
+})
+const content=await ContentModel.findOne({
+  Userid:link.Userid
+})
+res.json({
+  content,
+  User:{
+    username:User?.username,
+    id:User?._id
+  }
+})
 })
 
-app.get("/api/v1/test", (req, res) => {
-  console.log("Test endpoint hit");
-  res.json({msg: "Server is working"});
-});
 
-app.listen(3000 ) ;
+
+app.listen(3000) ;
