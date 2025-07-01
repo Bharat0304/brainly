@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from "cors";
 import{randomhash} from './utils'
 import mongoose from 'mongoose';
 import z, { boolean, literal } from "zod";
@@ -8,8 +9,13 @@ import jwt from "jsonwebtoken";
 import { ContentModel, LinkModel, UserModel } from './db';
 import { JWT_SECRET,mongodburl } from './config';
 import { Usermiddleware } from './middleware';
+
 const app=express();
 app.use(express.json());
+app.use(cors({
+   origin: 'http://localhost:5173',
+   credentials:true
+}));
 async function abc() {
   await mongoose.connect(mongodburl);
 }
@@ -223,5 +229,6 @@ res.json({
 })
 
 
-
-app.listen(3000) ;
+app.listen(3000, '0.0.0.0', () => {
+  console.log("Server listening on port 3000");
+}) ;

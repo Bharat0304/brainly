@@ -13,6 +13,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
 const utils_1 = require("./utils");
 const mongoose_1 = __importDefault(require("mongoose"));
 const zod_1 = __importDefault(require("zod"));
@@ -23,6 +24,10 @@ const config_1 = require("./config");
 const middleware_1 = require("./middleware");
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
+app.use((0, cors_1.default)({
+    origin: 'http://localhost:5173',
+    credentials: true
+}));
 function abc() {
     return __awaiter(this, void 0, void 0, function* () {
         yield mongoose_1.default.connect(config_1.mongodburl);
@@ -203,4 +208,6 @@ app.get("/api/v1/brain/:sharelink", (req, res) => __awaiter(void 0, void 0, void
         }
     });
 }));
-app.listen(3000);
+app.listen(3000, '0.0.0.0', () => {
+    console.log("Server listening on port 3000");
+});
